@@ -1,5 +1,14 @@
-rabbitmq:
-  image: rabbitmq:management
-  ports:
-    - "5672:5672"
-    - "15672:15672"
+services:
+  rabbitmq:
+    container_name: rabbitmq-consumer
+    image: rabbitmq:management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - scs-network
+
+networks:
+  scs-network:
+    name: scs-network
+    driver: bridge

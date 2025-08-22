@@ -1,0 +1,72 @@
+server:
+  port: 8080
+spring:
+  application:
+    name: user-producer
+  datasource:
+    url: jdbc:postgresql://localhost:5438/producer-db
+    username: ronaldo
+    password: ronaldo
+    sql:
+      init:
+        mode: always
+    jpa:
+      show-sql: true
+      hibernate:
+        ddl-auto: none  # Importante: previne o Hibernate de tentar criar as tabelas
+      properties:
+        hibernate:
+          default_schema: producer-db
+          dialect: org.hibernate.dialect.PostgreSQLDialect
+          jdbc:
+            lob:
+              non-contextual-creation: true
+  rabbitmq:
+    username: guest
+    password: guest
+    host: localhost
+    port: 5672
+  cloud:
+    stream:
+      bindings:
+        userEvent-out-0:
+          destination: ead.user.event
+          content-type: application/json
+      rabbit:
+        bindings:
+          userEvent-out-0:
+            producer:
+              exchange-type: topic
+              routing-key-expression: "headers['routingKey']"
+              declare-exchange: true
+              exchange-durable: true
+
+  ## Flyway Configs
+  flyway:
+    #Essa propriedade serve para ativarmos o Flyway
+    enabled: true
+    locations: classpath:db/migration
+
+    #Essa propriedade para criar uma tabela com as migrações e assim ter acesso ao histórico de modificações.
+    baseline-on-migrate: true
+    user: ronaldo
+    password: ronaldo
+
+    # Valida se as migrações aplicadas no banco correspondem aos arquivos de migração
+    # Ajuda a detectar mudanças não autorizadas nas migrações já executadas
+    validate-on-migrate: true
+
+    # Permite o uso do comando Flyway clean (que limpa todas as tabelas)
+    # CUIDADO: Em produção, isso deveria ser true para evitar deleção acidental dos dados
+    clean-disabled: false
+
+    # Permite que o Flyway crie os schemas se eles não existirem
+    # Útil durante o desenvolvimento, mas considere false em produção
+    create-schemas: false
+
+    # Schema padrão onde o Flyway irá criar sua tabela de histórico e executar migrações
+    # Deve corresponder ao schema principal da sua aplicação
+    default-schema: producer-db
+    init-sqls: |
+      CREATE SCHEMA IF NOT EXISTS "producer-db";
+      ALTER DATABASE "producer-db" SET search_path TO "producer-db";

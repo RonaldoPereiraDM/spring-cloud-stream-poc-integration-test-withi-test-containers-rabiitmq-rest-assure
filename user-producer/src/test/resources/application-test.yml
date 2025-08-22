@@ -1,0 +1,48 @@
+server:
+  port: 8080
+spring:
+  application:
+    name: user-consumer
+  rabbitmq:
+    username: guest
+    password: guest
+    host: localhost
+    port: 5672
+  # ========================================
+  # NÍVEL 1: BINDING DO SPRING CLOUD STREAM
+  # ========================================
+  # Propósito: Liga APLICAÇÃO → CANAL ABSTRATO
+  # Abstração: Funciona com qualquer broker (RabbitMQ, Kafka, etc.)
+  cloud:
+    stream:
+      bindings:                                    # ← BINDING NÍVEL 1 (Abstrato)
+        appCreatedSupplier-out-0:                 # ← Nome da função Spring
+          destination: app.v1.event.app-created   # ← CANAL ABSTRATO (não é especificamente RabbitMQ)
+          content-type: application/json          # ← Configuração genérica
+        appUpdatedSupplier-out-0:
+          destination: app.v1.event.app-updated
+          content-type: application/json
+
+      # ========================================
+      # NÍVEL 2: BINDING DO RABBITMQ
+      # ========================================
+      # Propósito: Liga CANAL ABSTRATO → INFRAESTRUTURA REAL do RabbitMQ
+      rabbit:                                     # ← Configurações específicas do RabbitMQ
+        bindings:                                 # ← BINDING NÍVEL 2 (Específico RabbitMQ)
+          appCreatedSupplier-out-0:               # ← Referencia o mesmo binding do nível 1
+            producer:                             # ← Configurações do PRODUTOR RabbitMQ
+              exchange-type: fanout               # ← ESPECÍFICO RabbitMQ: tipo do exchange
+              routing-key: ""                     # ← ESPECÍFICO RabbitMQ: chave de roteamento
+              declare-exchange: true              # ← ESPECÍFICO RabbitMQ: criar exchange
+              exchange-durable: true              # ← ESPECÍFICO RabbitMQ: persistência
+          appUpdatedSupplier-out-0:
+            producer:
+              exchange-type: fanout
+              routing-key: ""
+              declare-exchange: true
+              exchange-durable: true
+
+        # O QUE ESTE BINDING FAZ:
+        # ✓ Pega os canais abstrato "app.v1.event.app-created" e "app.v1.event.app-updated"
+        # ✓ Mapeia para dois EXCHANGE's tipo fanout concretos no RabbitMQ
+        # ✓ Define características específicas do RabbitMQ
