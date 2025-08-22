@@ -1,0 +1,13 @@
+CREATE TABLE tb_users(
+    user_id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
+    creation_date TIMESTAMP NOT NULL,
+    email CHARACTER VARYING(50) NOT NULL UNIQUE,
+    full_name CHARACTER VARYING(150) NOT NULL UNIQUE,
+    image_url CHARACTER VARYING(255),
+    last_update_date TIMESTAMP NOT NULL,
+    password CHARACTER VARYING(255) NOT NULL UNIQUE,
+    phone_number CHARACTER VARYING(255),
+    user_name CHARACTER VARYING(50) NOT NULL UNIQUE,
+    user_status VARCHAR(10) NOT NULL CHECK (user_status IN ('ACTIVE', 'BLOCKED')),
+    user_type VARCHAR(10) NOT NULL CHECK (user_type IN ('ADMIN', 'USER', 'STUDENT', 'INSTRUCTOR'))
+);

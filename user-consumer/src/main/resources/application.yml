@@ -1,0 +1,70 @@
+server:
+  port: 8081
+spring:
+  application:
+    name: user-consumer
+  datasource:
+    url: jdbc:postgresql://localhost:5434/consumer-db
+    username: ronaldo
+    password: ronaldo
+    sql:
+      init:
+        mode: always
+    jpa:
+      show-sql: true
+      hibernate:
+        ddl-auto: none  # Importante: previne o Hibernate de tentar criar as tabelas
+      properties:
+        hibernate:
+          default_schema: consumer-db
+          dialect: org.hibernate.dialect.PostgreSQLDialect
+          jdbc:
+            lob:
+              non-contextual-creation: true
+  rabbitmq:
+    username: guest
+    password: guest
+    host: localhost
+    port: 5672
+  cloud:
+    function:
+      definition: userEventListener
+    stream:
+      bindings:
+        userEventListener-in-0:
+          destination: ead.user.event
+          group: ead.userevent.ms.course
+          content-type: application/json
+          maxAttempts: 1 # 1 para desligar o Retry default, pois é a abordagem recomendada na documentação
+      rabbit:
+        bindings:
+          userEventListener-in-0:
+            consumer:
+              # Topic Exchange config
+              exchangeType: topic
+              declareExchange: true
+              # Queue config
+              queueNameGroupOnly: true
+              bindQueue: true
+              bindingRoutingKey: ead.user.created
+              routingKeyExpression: 'routingKey'
+              # DLQ config
+              auto-bind-dlq: true
+              dead-letter-exchange: ead.user.event.dlx   # DLX da fila principal
+              dead-letter-queue-name: ead.userevent.ms.course.dlq
+              dlq-ttl: 86400000
+
+  ## Flyway Configs
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+    user: ronaldo
+    password: ronaldo
+    validate-on-migrate: true
+    clean-disabled: false
+    create-schemas: false
+    default-schema: consumer-db
+    init-sqls: |
+      CREATE SCHEMA IF NOT EXISTS "consumer-db";
+      ALTER DATABASE "consumer-db" SET search_path TO "consumer-db";

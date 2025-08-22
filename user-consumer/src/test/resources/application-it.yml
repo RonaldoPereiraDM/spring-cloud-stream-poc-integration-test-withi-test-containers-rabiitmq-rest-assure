@@ -1,0 +1,102 @@
+server:
+  port: 8080
+spring:
+  application:
+    name: user-consumer
+  datasource:
+    url: jdbc:postgresql://localhost:5434/consumer-db
+    username: ronaldo
+    password: ronaldo
+    sql:
+      init:
+        mode: always
+    jpa:
+      show-sql: true
+      hibernate:
+        ddl-auto: none  # Importante: previne o Hibernate de tentar criar as tabelas
+      properties:
+        hibernate:
+          default_schema: consumer-db
+          dialect: org.hibernate.dialect.PostgreSQLDialect
+          jdbc:
+            lob:
+              non-contextual-creation: true
+  rabbitmq:
+    username: guest
+    password: guest
+    host: localhost
+    port: 5672
+  # ========================================
+  # NÍVEL 1: BINDING DO SPRING CLOUD STREAM
+  # ========================================
+  # Propósito: Liga APLICAÇÃO → CANAL ABSTRATO
+  # Abstração: Funciona com qualquer broker (RabbitMQ, Kafka, etc.)
+  cloud:
+    function:
+      definition: userEventListener
+      scan:
+        enable: true
+    stream:
+      default-binder: rabbit
+      bindings:
+        userEventListener-in-0:
+          destination: ead.user.event
+          group: ead.userevent.ms.course
+          content-type: application/json
+          maxAttempts: 1 # 1 para desligar o Retry default, pois é a abordagem recomendada na documentação
+          #config para desligar o retry do Binder
+          consumer:
+            maxAttempts: 1
+      rabbit:
+        bindings:
+          userEventListener-in-0:
+            consumer:
+              # Topic Exchange config
+              exchangeType: topic
+              declareExchange: true
+              # Queue config
+              queueNameGroupOnly: true
+              bindQueue: true
+              bindingRoutingKey: ead.user.created
+              routingKeyExpression: 'routingKey'
+              # DLQ config
+              auto-bind-dlq: true
+              dead-letter-exchange: ead.user.event.dlx   # DLX da fila principal
+              dead-letter-queue-name: ead.userevent.ms.course.dlq
+              dlq-ttl: 86400000
+              republishToDlq: true      # (opcional, recomendável p/ headers de erro)
+    #esta propriedade deve ser usada apenas para o profile de testes
+    test-binder: true
+
+  ## Flyway Configs
+  flyway:
+    #Essa propriedade serve para ativarmos o Flyway
+    enabled: true
+    locations: classpath:db/migration
+
+    #Essa propriedade para criar uma tabela com as migrações e assim ter acesso ao histórico de modificações.
+    baseline-on-migrate: true
+    user: ronaldo
+    password: ronaldo
+
+    # Valida se as migrações aplicadas no banco correspondem aos arquivos de migração
+    # Ajuda a detectar mudanças não autorizadas nas migrações já executadas
+    validate-on-migrate: true
+
+    # Permite o uso do comando Flyway clean (que limpa todas as tabelas)
+    # CUIDADO: Em produção, isso deveria ser true para evitar deleção acidental dos dados
+    clean-disabled: false
+
+    # Permite que o Flyway crie os schemas se eles não existirem
+    # Útil durante o desenvolvimento, mas considere false em produção
+    create-schemas: false
+
+    # Schema padrão onde o Flyway irá criar sua tabela de histórico e executar migrações
+    # Deve corresponder ao schema principal da sua aplicação
+    default-schema: consumer-db
+    init-sqls: |
+      CREATE SCHEMA IF NOT EXISTS "consumer-db";
+      ALTER DATABASE "consumer-db" SET search_path TO "consumer-db";
+  logging:
+    level:
+      org.springframework.cloud.function: DEBUG

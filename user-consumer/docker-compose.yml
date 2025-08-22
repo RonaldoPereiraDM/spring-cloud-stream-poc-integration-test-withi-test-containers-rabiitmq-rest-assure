@@ -1,0 +1,37 @@
+services:
+#  rabbitmq:
+#    container_name: rabbitmq-consumer
+#    image: rabbitmq:management
+#    ports:
+#      - "5672:5672"
+#      - "15672:15672"
+#    networks:
+#      - consumer-network
+  database:
+    image: 'postgres:13.1-alpine'
+    container_name: postgresql-consumer
+    restart: always
+    environment:
+      POSTGRES_DB: consumer-db
+      POSTGRES_USER: ronaldo
+      POSTGRES_PASSWORD: ronaldo
+    command: -p 5432
+    ports:
+      - "5434:5432"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ronaldo -d consumer-db -p 5432" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - consumer-network
+
+networks:
+  consumer-network:
+    name: consumer-network
+    driver: bridge
+  scs-network:
+    # Indica que esta rede já existe e foi criada externamente
+    # Geralmente usada para comunicação com outros serviços como RabbitMQ
+    external: true
