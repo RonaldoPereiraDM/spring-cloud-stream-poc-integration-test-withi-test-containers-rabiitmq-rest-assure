@@ -1,11 +1,8 @@
 ## Notas sobre POC - Spring Cloud Stream com TestContainers, Spring Cloud Test Binder, RabbitMQ e RestAssure
 
-- Este projeto tem como objetivo colocar em prática conceitos que eu aprendi sobre o Spring Cloud Stream e como usá-lo junto com RabbitMQ.
+- Este projeto tem como objetivo colocar em prática conceitos que eu aprendi sobre o Spring Cloud Stream e como usá-lo junto com RabbitMQ através de teste integrados usando JUnit/TestConteiners/RestAssure como ferramentas de testes.
 
-## Links que eu consultei para entender como usar o Spring Cloud Stream junto com RabbitMQ
-
-
-## Exemplos de testes integrados usando Spring Cloud Stream com e TestContainers
+## Links que eu consultei para entender como usar o Spring Cloud Stream junto com RabbitMQ com exemplos de testes integrados usando Spring Cloud Stream com e TestContainers
  - [spring-cloud-stream-event-sourcing-testcontainers](https://github.com/ivangfr/spring-cloud-stream-event-sourcing-testcontainers)
  - [Exemplo de teste de integração no lado PRODUCER/PUBLISHER usando Spring Cloud Stream Binder Test e TestContainers com MySQL](https://github.com/ivangfr/spring-cloud-stream-event-sourcing-testcontainers/blob/master/user-service/src/test/java/com/ivanfranchin/userservice/user/UserEmitterTest.java)
  - [Exemplo de teste de integração no lado LISTENER/SUBSCRIPTION usando Spring Cloud Stream Binder Test e TestContainers com MySQL](https://github.com/ivangfr/spring-cloud-stream-event-sourcing-testcontainers/blob/master/user-service/src/test/java/com/ivanfranchin/userservice/user/UserEmitterTest.java)
@@ -66,7 +63,7 @@ Na aplicação Consumer (apenas para o profile de teste de integração) é poss
         stream:
           default-binder: rabbit        
      ```
-   - application-it.yml do teste integrado do Consumer para o cenário em questão. Para o Producer usei a anotação @Import(TestChannelBinderConfiguration.class) para o cenário de teste. O motivo: uma mensagem enviada há um exchange não pode ser recuperada (apenas com uma fila associada ao exchange, mas este cenário é para a aplicação Consumer). Usando o TestBinder (fornecido pela anotação citada antes) do Spring Cloud Stream é possível obter a mensagem enviada ao binder (mas não diretamente ao que foi enviado RabbitMQ pelos limites do Binder de test como descrito acima):  
+ - application-it.yml do teste integrado do Consumer para o cenário em questão. Para o Producer usei a anotação @Import(TestChannelBinderConfiguration.class) para o cenário de teste. O motivo: uma mensagem enviada há um exchange não pode ser recuperada (apenas com uma fila associada ao exchange, mas este cenário é para a aplicação Consumer). Usando o TestBinder (fornecido pela anotação citada antes) do Spring Cloud Stream é possível obter a mensagem enviada ao binder (mas não diretamente ao que foi enviado RabbitMQ pelos limites do Binder de test como descrito acima):  
    - ```yaml
      spring:
       cloud:
